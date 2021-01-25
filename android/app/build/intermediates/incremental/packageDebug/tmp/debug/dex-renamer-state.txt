@@ -1,0 +1,4 @@
+#Mon Nov 16 03:29:48 BRT 2020
+base.0=/Users/carlos/Documents/GitHub/Conector-App/android/app/build/intermediates/dex/debug/mergeDexDebug/out/classes.dex
+path.0=classes.dex
+renamed.0=classes.dex

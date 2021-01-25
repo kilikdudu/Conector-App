@@ -1,0 +1,6 @@
+module Pods_Conector_ConectorTests {
+  umbrella header "Pods-Conector-ConectorTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
