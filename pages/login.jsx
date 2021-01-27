@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
 import MyContext from '../context/MyContext';
+import Loading from './loading';
 
 export default class Login extends Component {
   
@@ -8,7 +9,8 @@ export default class Login extends Component {
 
   state={
     email:"bruno@seila.com",
-    password:"123456"
+    password:"123456",
+    loading: false
   }
 
   constructor({ navigation }) {
@@ -16,19 +18,31 @@ export default class Login extends Component {
 
       this.navigation = navigation;
       
-  }
+  } 
 
   login = async () => {
-    var ret = this.context.login(this.state.email, this.state.password);
-    if(ret)
+    this.setState({ loading: true });
+    var request = await this.context.login(this.state.email, this.state.password);
+    this.setState({ loading: false });
+    if(request.sucesso) {
       this.navigation.navigate("Register");
-    else
-      console.log("Falha", ret);
+      this.setState({ loading: false });
+    }
+    else {
+      Alert.alert(
+        "Atenção",
+        request.mensagem,
+        [ { text: "OK" } ]
+      );
+    }
+    
+
   }
 
   render(){
     return (
       <View style={styles.container}>
+        <Loading visibility={this.state.loading} />
         <Text style={styles.logo}>Conector</Text>
         <View style={styles.inputView} >
           <TextInput  

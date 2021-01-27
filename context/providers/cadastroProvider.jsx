@@ -1,6 +1,6 @@
 import MyContext from '../MyContext';
 import React, { Component } from 'react';
-import { gql } from '@apollo/client'
+import UserService from '../../services/user';
 
 export default class CadastroProvider extends Component {
 
@@ -11,7 +11,8 @@ export default class CadastroProvider extends Component {
             { name: 'Honda', price: 100, id: "car01" },
             { name: 'BMW', price: 150, id: "car02" },
             { name: 'Mercedes', price: 200, id: "car03" }
-        ]
+        ],
+        user: {},
     };
 
     render() {
@@ -20,6 +21,7 @@ export default class CadastroProvider extends Component {
             <MyContext.Provider
                 value={{
                     cars: this.state.cars,
+                    user: this.state.user,
                     incrementPrice: selectedID => {
                         const cars = [...this.state.cars];
                         let car = cars.find(e => e.id == selectedID);
@@ -37,23 +39,26 @@ export default class CadastroProvider extends Component {
                         });
                     },
                     login: async (email, password) => {
-                        var resultQuery = await this.context.apiClient
-                        .query({ 
-                            query: gql`
-                                {
-                                    login(email: $email, password: $password){
-                                        firstName
-                                        mobile
-                                        id
-                                    }
-                                }
-                            `,
-                            variables: {
-                                email: email,
-                                password: password
-                            }
-                        });
-                        console.log("Resultado graph", resultQuery.data);
+                        let request = await (new UserService(this.context.apiClient)).login(email, password);
+                        if(request.sucesso) {
+                            let user = this.state.user;
+                            user = request.data.login;
+                            this.setState({
+                                user
+                            });
+                        }
+                        return request;
+                    },
+                    addUser: async (params) => {
+                        let request = await (new UserService(this.context.apiClient)).addUser(params);
+                        if(request.sucesso) {
+                            let user = this.state.user;
+                            user = request.data.addUser;
+                            this.setState({
+                                user
+                            });
+                        }
+                        return request;
                     }
                 }}
             >
