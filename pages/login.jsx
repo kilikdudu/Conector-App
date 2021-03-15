@@ -9,30 +9,26 @@ export default class Login extends Component {
 
   state={
     email:"bruno@seila.com",
-    password:"123456",
-    loading: false
+    password:"123456"
   }
 
   constructor({ navigation }) {
       super();
-
       this.navigation = navigation;
-      
   } 
 
   login = async () => {
-    this.setState({ loading: true });
+    this.context.showLoading();
     var request = await this.context.login(this.state.email, this.state.password);
-    this.setState({ loading: false });
     if(request.sucesso) {
       this.navigation.navigate("Register");
-      this.setState({ loading: false });
+      this.context.hideLoading();
     }
     else {
       Alert.alert(
         "Atenção",
         request.mensagem,
-        [ { text: "OK" } ]
+        [ { text: "OK", onPress: () => this.context.hideLoading() } ]
       );
     }
     
@@ -42,7 +38,7 @@ export default class Login extends Component {
   render(){
     return (
       <View style={styles.container}>
-        <Loading visibility={this.state.loading} />
+        <Loading visibility={this.context.loading} />
         <Text style={styles.logo}>Conector</Text>
         <View style={styles.inputView} >
           <TextInput  
@@ -55,6 +51,7 @@ export default class Login extends Component {
         <View style={styles.inputView} >
           <TextInput  
             secureTextEntry
+            textContentType='oneTimeCode'
             style={styles.inputText}
             placeholder="Password..." 
             placeholderTextColor="#003f5c"

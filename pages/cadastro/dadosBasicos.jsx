@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Text,
   ScrollView,
-  View
+  View,
 } from 'react-native';
 import GlobalStyles from '../../styles/globalStyles';
 import {
@@ -11,33 +11,39 @@ import {
   } from '@freakycoder/react-native-material-textfield';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { Button } from 'react-native-elements';
-
 import Loading from '../loading';
 import MyContext from '../../context/MyContext';
+import Mask from '../../lib/mask';
+import GenericUtil from '../../lib/genericUtil';
+import Footer from './footer';
+
 
 
 export default class DadosBasicos extends Component {
 
     static contextType = MyContext;
 
+    state = {
+        firstName: "",
+        lastName: "",
+        birthDay: "",
+        isDatePickerVisible: false,
+        password: "",
+        secureTextEntry: true,
+        confirmPassword: "",
+        confirmSecureTextEntry: true,
+        errors: {},
+    };
+
     constructor({ navigation }) {
         super();
 
         MaterialIcon.loadFont();
+        this.navigation = navigation;
 
-        this.state = {
-            loading: false,
-            firstName: "",
-            lastName: "",
-            birthDay: "",
-            password: "",
-            secureTextEntry: true,
-            confirmPassword: "",
-            confirmSecureTextEntry: true,
-        };
     }
 
-    renderPasswordEye(entryVisibleState, pressCallback) {
+    renderPasswordEye = (entryVisibleState, pressCallback) => {
         let name = entryVisibleState?
         'visibility-off':
         'visibility';
@@ -53,59 +59,76 @@ export default class DadosBasicos extends Component {
         );
     }
 
-    renderPasswordAccessory() {
+    renderPasswordAccessory = () => {
         let { secureTextEntry } = this.state;
         
         return this.renderPasswordEye(secureTextEntry, this.onAccessoryPress);
 
     }
 
-    renderPasswordConfirmAccessory() {
+    renderPasswordConfirmAccessory = () => {
         let { confirmSecureTextEntry } = this.state;
     
         return this.renderPasswordEye(confirmSecureTextEntry, this.onAccessoryConfirmPress);
     }
 
-    onAccessoryPress() {
+    onAccessoryPress = () => {
         this.setState(({ secureTextEntry }) => ({ secureTextEntry: !secureTextEntry }));
     }
 
-    onAccessoryConfirmPress() {
+    onAccessoryConfirmPress = () => {
         this.setState(({ confirmSecureTextEntry }) => ({ confirmSecureTextEntry: !confirmSecureTextEntry }));
     }
 
-    async onSubmit() {
+    onSubmit = async () => {
         let errors = {};
+        let emptyText = 'Should not be empty';
 
-        if(!this.state.firstName.value())
-            errors[firstName] = 'Should not be empty';
+        if(!this.state.firstName)
+            errors["firstName"] = emptyText;
 
-        if(!this.state.lastName.value())
-            errors[lastName] = 'Should not be empty';
+        if(!this.state.lastName)
+            errors["lastName"] = emptyText;
         
-        if(!this.state.birthDay.value())
-            errors[firstName] = 'Should not be empty';
+        let birthday = null;
+        if(!this.state.birthDay) {
+            errors["birthDay"] = emptyText;
+        } else {
+            birthday = GenericUtil.brazilDateStringToDate(this.state.birthDay);
+            if(!birthday || GenericUtil.dateIsAfterAsTheSecond(birthday, new Date()))
+                errors["birthDay"] = 'Invalid date.';
+        }
 
-        fieldRefs
-            .forEach((name) => {
-            let value = this[name].value();
-
-            if (!value) {
-                errors[name] = 'Should not be empty';
-            } else {
-                if ('password' === name && value.length < 6) {
-                errors[name] = 'Too short';
-                }
-                if('confirmPassword' === name && value != this['password'].value()) {
-                errors[name] = 'Confirm password need to be the same as password';
-                }
+        if(!this.state.password) {
+            errors["password"] = emptyText;
+        } else if(this.state.password.length < 6) {
+            errors["password"] = 'Too short';
+        } else {
+            if(!this.state.confirmPassword) {
+                errors["confirmPassword"] = emptyText;
+            } else if(this.state.password != this.state.confirmPassword) {
+                errors["confirmPassword"] = 'Confirm password need to be the same as password';
             }
-            });
+        }
 
         this.setState({ errors });
+
+        //if(errors.Keys.length == 0){
+            this.context.setDadosBasicos({
+                firstName: this.state.firstName,
+                lastName: this.state.lastName,
+                birthday: GenericUtil.dateToServiceFormat(birthday),
+                password: this.state.password,
+            });
+            this.navigation.navigate("ContactInfo");
+        //}
+
+        
     }
 
     render() {
+
+        
 
         return (
             <View style={GlobalStyles.Container.containerGeral}>
@@ -116,37 +139,42 @@ export default class DadosBasicos extends Component {
                     <Text style={GlobalStyles.Label.titleForm} >Tell us who are you.</Text>
                     <TextField
                         onChangeText={text => this.setState({firstName:text})}
-                        value={this.firstName}
+                        value={this.state.firstName}
                         label="FIRST NAME"
-                        error={errors.firstName}
+                        error={this.state.errors.firstName}
                     />
                     <TextField
                         onChangeText={text => this.setState({lastName:text})}
-                        value={this.lastName}
+                        value={this.state.lastName}
                         label="LAST NAME"
-                        error={errors.lastName}
+                        error={this.state.errors.lastName}
                     />
                     <TextField
                         onChangeText={text => this.setState({birthDay:text})}
-                        value={this.birthDay}
-                        label="BIRTHDAY"
-                        error={errors.birthDay}
+                        value={this.state.birthDay}
+                        label="BIRTHDAY (DD/MM/YYYY)"
+                        maxLength={10}
+                        formatText={text => Mask.date(text)}
+                        error={this.state.errors.birthDay}
                     />
+                    
                     <TextField
                         onChangeText={text => this.setState({password:text})}
-                        value={this.password}
-                        secureTextEntry={this.secureTextEntry}
+                        value={this.state.password}
+                        secureTextEntry={this.state.secureTextEntry}
                         label="PASSWORD"
+                        textContentType='oneTimeCode'
                         renderRightAccessory={this.renderPasswordAccessory}
-                        error={errors.password}
+                        error={this.state.errors.password}
                     />
                     <TextField
                         onChangeText={text => this.setState({confirmPassword:text})}
-                        value={this.confirmPassword}
-                        secureTextEntry={this.confirmSecureTextEntry}
+                        value={this.state.confirmPassword}
+                        secureTextEntry={this.state.confirmSecureTextEntry}
                         label="CONFIRM PASSWORD"
+                        textContentType='oneTimeCode'
                         renderRightAccessory={this.renderPasswordConfirmAccessory}
-                        error={errors.confirmPassword}
+                        error={this.state.errors.confirmPassword}
                     />
                         <Button
                             onPress={this.onSubmit}
@@ -155,18 +183,7 @@ export default class DadosBasicos extends Component {
                             titleStyle={GlobalStyles.Label.textButton}
                             title="NEXT" />
                 </ScrollView>
-                <View style={GlobalStyles.Cadastro.footerForm}>
-                    <View style={GlobalStyles.Cadastro.lineFooter}></View>
-                    <View style={GlobalStyles.Cadastro.itensFooter}>
-                        <View style={GlobalStyles.Cadastro.circle}>
-                            <View style={GlobalStyles.Cadastro.internalCircle} backgroundColor="#FFD599"></View>
-                        </View>
-                        <View style={GlobalStyles.Cadastro.circle}></View>
-                        <View style={GlobalStyles.Cadastro.circle}></View>
-                        <View style={GlobalStyles.Cadastro.circle}></View>
-                        <View style={GlobalStyles.Cadastro.circle}></View>
-                    </View>
-                </View>
+                <Footer step={1} />
             </View>
         )
     }

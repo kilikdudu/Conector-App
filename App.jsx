@@ -8,6 +8,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Login from './pages/login';
 import DadosBasicos from './pages/cadastro/dadosBasicos';
+import DadosContato from './pages/cadastro/dadosContato';
 import GlobalStyles from './styles/globalStyles';
 import CadastroProvider from './context/providers/cadastroProvider';
 
@@ -40,6 +41,11 @@ const App = (navigation) => {
               name="Register"
               component={DadosBasicos}
               options={{ title: 'Register'}}
+            />
+            <Stack.Screen
+              name="ContactInfo"
+              component={DadosContato}
+              options={{ title: 'Contact'}}
             />
         </Stack.Navigator>
       </CadastroProvider>
